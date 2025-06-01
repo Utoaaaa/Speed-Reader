@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字速讀器</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px; 
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin-right: 10px;
+            margin-bottom: 10px; 
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* Updated Controls Layout */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Default to single column for control groups */
+            gap: 18px; /* Gap between control groups */
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        @media (min-width: 768px) { /* Breakpoint for two columns of control groups */
+            .controls-grid {
+                grid-template-columns: 1fr 1fr; /* Two columns for wider screens */
+            }
+        }
+
+        .control-group {
+            display: grid;
+            /* Defines columns for label and input within a group */
+            grid-template-columns: 140px 1fr; /* Label fixed width, input takes rest */
+            gap: 10px; /* Gap between label and input */
+            align-items: center; /* Vertically align items in the row */
+        }
+
+        .control-group label {
+            margin-bottom: 0; /* Reset margin as it's now side-by-side */
+            font-weight: bold;
+            text-align: left; 
+        }
+        
+        .control-group input[type="number"],
+        .control-group select,
+        .control-group input[type="color"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            width: 100%; 
+        }
+        
+        .control-group input[type="color"] {
+            height: 40px; 
+        }
+
+        /* For smaller screens, stack label above input within each control group */
+        @media (max-width: 599px) { 
+            .control-group {
+                grid-template-columns: 1fr; /* Label and input take full width and stack */
+                gap: 5px; /* Smaller gap when stacked */
+            }
+            .control-group label {
+                margin-bottom: 5px; /* Add margin back when stacked */
+                text-align: left; 
+            }
+            /* Ensure controls-grid is also single column on these small screens */
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+        #status {
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+            width: 100%;
+            text-align: center;
+        }
+
+        #currentWordDisplay {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 8vw; 
+            font-weight: bold;
+            min-height: 200px; 
+            padding: 20px; 
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            background-color: #F5F5DC; 
+            color: #222222; 
+            line-height: 1.4; 
+        }
+
+        @media (max-width: 768px) { 
+            #currentWordDisplay {
+                font-size: 7vw; 
+                min-height: 180px;
+            }
+            h1 {
+                font-size: 28px;
+            }
+        }
+
+
+        @media (max-width: 480px) { 
+            #currentWordDisplay {
+                /* Font size for word/sentence mode is handled by JS */
+                min-height: 150px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            /* Button styling for small screens */
+            .button-container button { /* Target buttons inside the specific container */
+                padding: 8px 12px;
+                font-size: 14px;
+                width: calc(50% - 5px); 
+                margin-right: 5px;
+            }
+            .button-container button:nth-child(2n){
+                margin-right: 0;
+            }
+            /* Ensure .controls-grid is single column, already handled by max-width: 599px and default */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>文字速讀器</h1>
+
+    <div class="container">
+        <textarea id="textInput" placeholder="在這裡輸入您想速讀的文字..."></textarea>
+        <div class="button-container" style="display: flex; flex-wrap: wrap;"> <button id="playButton" disabled>開始播放</button>
+            <button id="stopButton" disabled>停止</button>
+        </div>
+
+        <div class="controls-grid">
+            <div class="control-group">
+                <label for="speedInput">播放速度 (單位/分鐘):</label>
+                <input type="number" id="speedInput" value="120" min="1" step="10">
+            </div>
+            <div class="control-group">
+                <label for="splitModeSelect">切割模式:</label>
+                <select id="splitModeSelect">
+                    <option value="word">一個字/詞</option>
+                    <option value="sentence">一句話</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="fontColorPicker">字體顏色:</label>
+                <input type="color" id="fontColorPicker" value="#222222">
+            </div>
+            <div class="control-group">
+                <label for="bgColorPicker">背景顏色:</label>
+                <input type="color" id="bgColorPicker" value="#F5F5DC">
+            </div>
+        </div>
+        <div id="status">請輸入文字</div>
+    </div>
+
+    <div class="container">
+        <h2>正在顯示的內容:</h2>
+        <div id="currentWordDisplay"></div>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        const playButton = document.getElementById('playButton');
+        const stopButton = document.getElementById('stopButton');
+        const speedInput = document.getElementById('speedInput');
+        const statusDiv = document.getElementById('status');
+        const currentWordDisplay = document.getElementById('currentWordDisplay');
+        const splitModeSelect = document.getElementById('splitModeSelect');
+        const fontColorPicker = document.getElementById('fontColorPicker');
+        const bgColorPicker = document.getElementById('bgColorPicker');
+
+        let displayUnits = [];
+        let currentUnitIndex = 0;
+        let isPlaying = false;
+        let displayTimer = null;
+
+        // Regex for word/char mode (Chinese chars, Bopomofo, English words, numbers)
+        const wordTokenRegex = /[\u4e00-\u9fa5\u3105-\u3129\u02CA\u02C7\u02CB\u02D9]|[a-zA-Z0-9]+/g;
+
+        function updateDisplayUnits() {
+            const text = textInput.value.trim();
+            const currentSplitMode = splitModeSelect.value;
+
+            if (currentSplitMode === 'word') {
+                displayUnits = text.match(wordTokenRegex) || [];
+                statusDiv.textContent = `共找到 ${displayUnits.length} 個可顯示字/詞 (已忽略標點)。`;
+            } else { // sentence mode - updated logic
+                const rawSentences = text.split(/[。！？；\n]+/);
+                displayUnits = [];
+                for (const initialSentence of rawSentences) {
+                    const trimmedInitialSentence = initialSentence.trim();
+                    if (trimmedInitialSentence.length === 0) {
+                        continue;
+                    }
+
+                    let currentIndexInSentence = 0;
+                    while (currentIndexInSentence < trimmedInitialSentence.length) {
+                        let nextCommaIndex = trimmedInitialSentence.indexOf('，', currentIndexInSentence);
+
+                        if (nextCommaIndex !== -1) {
+                            // Found a comma. Segment includes the comma.
+                            const segment = trimmedInitialSentence.substring(currentIndexInSentence, nextCommaIndex + 1);
+                            if (segment.trim().length > 0) { // Ensure segment is not just whitespace
+                                displayUnits.push(segment.trim());
+                            }
+                            currentIndexInSentence = nextCommaIndex + 1;
+                        } else {
+                            // No more commas in the rest of this initialSentence segment
+                            const segment = trimmedInitialSentence.substring(currentIndexInSentence);
+                            if (segment.trim().length > 0) { // Ensure non-empty segment
+                                displayUnits.push(segment.trim());
+                            }
+                            break; // Exit while loop for this initialSentence
+                        }
+                    }
+                }
+                // Final filter for any empty strings, though the logic above tries to prevent them
+                displayUnits = displayUnits.filter(s => s.length > 0);
+                statusDiv.textContent = `共找到 ${displayUnits.length} 個顯示段落。`;
+            }
+            
+            if (displayUnits.length > 0) {
+                playButton.disabled = false;
+            } else {
+                playButton.disabled = true;
+                if (currentSplitMode === 'word') {
+                    statusDiv.textContent = '請輸入可播放的文字 (字/詞模式)。';
+                } else {
+                    statusDiv.textContent = '請輸入可播放的文字 (句子/段落模式)。';
+                }
+            }
+            currentUnitIndex = 0;
+            if (!isPlaying) { 
+                currentWordDisplay.textContent = '';
+            }
+        }
+
+        textInput.addEventListener('input', updateDisplayUnits);
+        splitModeSelect.addEventListener('change', () => {
+            updateDisplayUnits();
+            if (isPlaying) {
+                stopPlaying(); // Stop playback if mode changes
+                currentWordDisplay.textContent = ''; 
+            }
+        });
+
+        fontColorPicker.addEventListener('input', (event) => {
+            currentWordDisplay.style.color = event.target.value;
+        });
+
+        bgColorPicker.addEventListener('input', (event) => {
+            currentWordDisplay.style.backgroundColor = event.target.value;
+        });
+
+
+        playButton.addEventListener('click', () => {
+            if (displayUnits.length === 0) {
+                updateDisplayUnits(); 
+                if (displayUnits.length === 0) { 
+                    statusDiv.textContent = '請先輸入文字並選擇模式。';
+                    return;
+                }
+            }
+            if (isPlaying) return;
+
+
+            isPlaying = true;
+            playButton.disabled = true;
+            stopButton.disabled = false;
+            textInput.disabled = true;
+            speedInput.disabled = true;
+            splitModeSelect.disabled = true;
+            fontColorPicker.disabled = true;
+            bgColorPicker.disabled = true;
+            statusDiv.textContent = '正在播放...';
+            
+            playNextUnit();
+        });
+
+        stopButton.addEventListener('click', () => {
+            stopPlaying();
+        });
+
+        function playNextUnit() {
+            if (!isPlaying || currentUnitIndex >= displayUnits.length) {
+                stopPlaying();
+                if (currentUnitIndex >= displayUnits.length && displayUnits.length > 0) {
+                    statusDiv.textContent = '播放完畢。';
+                }
+                return;
+            }
+
+            const currentToken = displayUnits[currentUnitIndex];
+            currentWordDisplay.textContent = currentToken;
+
+            // Adjust font size dynamically
+            const baseFontSizeVW = 8; 
+            if (splitModeSelect.value === 'sentence') {
+                if (currentToken.length > 50) {
+                    currentWordDisplay.style.fontSize = `${baseFontSizeVW * 0.5}vw`; 
+                } else if (currentToken.length > 30) {
+                    currentWordDisplay.style.fontSize = `${baseFontSizeVW * 0.65}vw`; 
+                } else if (currentToken.length > 15) {
+                    currentWordDisplay.style.fontSize = `${baseFontSizeVW * 0.8}vw`; 
+                } else {
+                    currentWordDisplay.style.fontSize = `${baseFontSizeVW}vw`; 
+                }
+            } else { // word mode
+                 let wordFontSize = baseFontSizeVW * 1.5; 
+                 if (window.innerWidth <= 768 && window.innerWidth > 480) {
+                    wordFontSize = baseFontSizeVW * 1.3; 
+                 } else if (window.innerWidth <= 480) {
+                    wordFontSize = baseFontSizeVW * 1.6; 
+                 }
+                 currentWordDisplay.style.fontSize = `${wordFontSize}vw`;
+            }
+
+
+            const tokensPerMinute = parseInt(speedInput.value) || 120; 
+            const safeTokensPerMinute = Math.max(1, tokensPerMinute); 
+            const delay = (60 / safeTokensPerMinute) * 1000; 
+
+            console.log(`Displaying: "${currentToken}", Speed: ${tokensPerMinute} TPM, Delay: ${delay.toFixed(2)}ms, Mode: ${splitModeSelect.value}`);
+            
+            currentUnitIndex++; 
+
+            displayTimer = setTimeout(playNextUnit, delay);
+        }
+
+        function stopPlaying() {
+            isPlaying = false; 
+            if (displayTimer) {
+                clearTimeout(displayTimer);
+                displayTimer = null;
+            }
+            
+            textInput.disabled = false;
+            speedInput.disabled = false;
+            splitModeSelect.disabled = false;
+            fontColorPicker.disabled = false;
+            bgColorPicker.disabled = false;
+            stopButton.disabled = true;
+            playButton.disabled = displayUnits.length === 0;
+
+
+            if (statusDiv.textContent === '播放完畢。' || statusDiv.textContent === '正在播放...') {
+                 updateDisplayUnits(); 
+            } else if (displayUnits.length > 0) {
+                 statusDiv.textContent = '播放已停止。';
+            } else { 
+                 statusDiv.textContent = '請輸入文字。';
+            }
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (isPlaying) {
+                stopPlaying();
+            }
+        });
+
+        function initializeApp() {
+            currentWordDisplay.style.color = fontColorPicker.value;
+            currentWordDisplay.style.backgroundColor = bgColorPicker.value;
+            updateDisplayUnits(); 
+        }
+
+        initializeApp();
+
+    </script>
+
+</body>
+</html>
