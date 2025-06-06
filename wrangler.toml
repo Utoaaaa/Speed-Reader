@@ -1,8 +1,6 @@
 name = "speed-reader"
 
 compatibility_date = "2025-06-06"
-
-main = "workers-site/index.js"
-
+index.html
 [site]
 bucket = "."
