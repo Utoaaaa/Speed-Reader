@@ -1,4 +1,4 @@
-name = "Speed-reader"
+name = "speed-reader"
 compatibility_date = "2025-06-06"
 [site]
 bucket = "." 
