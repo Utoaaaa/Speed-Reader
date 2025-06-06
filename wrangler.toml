@@ -1,0 +1,4 @@
+name = "Speed-reader"
+compatibility_date = "2025-06-06"
+[site]
+bucket = "." 
