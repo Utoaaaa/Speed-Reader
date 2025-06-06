@@ -1,6 +1,5 @@
 name = "speed-reader"
 
 compatibility_date = "2025-06-06"
-index.html
 [site]
 bucket = "."
