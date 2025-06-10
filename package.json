@@ -1,11 +1,12 @@
 {
   "name": "speed-reader",
   "version": "1.0.0",
-  "main": "BlurGradientBg.min.js",
+  "main": "AestheticFluidBg.min.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:tailwind": "postcss ./style.css -o ./dist/output.css --watch",
-    "start": "http-server ."
+    "start": "http-server .",
+    "build": "node build.js"
   },
   "keywords": [],
   "author": "",
@@ -18,5 +19,11 @@
     "postcss": "^8.5.4",
     "postcss-cli": "^11.0.1",
     "tailwindcss": "^4.1.8"
+  },
+  "dependencies": {
+    "@material/web": "^2.3.0",
+    "dotenv": "^16.5.0",
+    "esbuild": "^0.25.5",
+    "openai": "^5.2.0"
   }
 }

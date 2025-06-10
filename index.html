@@ -5,44 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文字速讀器</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="dist/output.css">
+    <style>
+        md-elevated-button {
+            --md-elevated-button-container-color: #FFFBEB;
+            --md-elevated-button-label-text-color: #000000;
+            width: 150px;
+        }
+    </style>
 </head>
 <body>
 
     <h1>文字速讀器</h1>
 
-    <div class="container">
-        <textarea id="textInput" placeholder="在這裡輸入您想速讀的文字..."></textarea>
-        <div class="button-container">
-            <button id="playButton" class="button" disabled>
-              開始播放
-              <div class="hoverEffect">
-                <div></div>
-              </div>
-            </button>
-            <button id="stopButton" class="button" disabled>
-              停止
-              <div class="hoverEffect">
-                <div></div>
-              </div>
-            </button>
+    <div class="main-layout">
+        <div class="container" id="settings-container">
+	<div class="tabs">
+		<input type="radio" id="radio-1" name="tabs" checked="">
+		<label class="tab" for="radio-1">AI 生成</label>
+		<input type="radio" id="radio-2" name="tabs">
+		<label class="tab" for="radio-2">手動輸入</label>
+		<span class="glider"></span>
+	</div>
+
+        <!-- AI Generate Tab Content -->
+        <div id="ai-generate" class="tab-content">
+            <div id="ai-controls">
+                <h2>AI 生成文章</h2>
+                <div class="control-group">
+                    <label>難易度:</label>
+                    <div class="tabs difficulty-tabs">
+                        <input type="radio" id="diff-easy" name="difficulty" value="easy" checked>
+                        <label class="tab" for="diff-easy">簡單</label>
+                        <input type="radio" id="diff-medium" name="difficulty" value="medium">
+                        <label class="tab" for="diff-medium">中等</label>
+                        <input type="radio" id="diff-hard" name="difficulty" value="hard">
+                        <label class="tab" for="diff-hard">困難</label>
+                        <span class="glider"></span>
+                    </div>
+                </div>
+                <md-elevated-button id="generateArticleButton">生成文章</md-elevated-button>
+            </div>
         </div>
 
+        <!-- Manual Input Tab Content -->
+        <div id="manual-input" class="tab-content hidden">
+            <h2>手動輸入文章</h2>
+            <textarea id="textInput" placeholder="在這裡輸入您想速讀的文字..."></textarea>
+        </div>
+
+        <!-- Common Controls -->
         <div class="controls-grid">
             <div class="control-group">
-                <label for="speedInput">播放速度 (單位/分鐘):</label>
-                <div
-                  class="relative group rounded-lg overflow-hidden before:absolute before:w-12 before:h-12 before:content[''] before:right-0 before:bg-violet-500 before:rounded-full before:blur-lg before:[box-shadow:-60px_20px_10px_10px_#F9B0B9]"
-                >
-                  <input
-                    type="number"
-                    id="speedInput"
-                    value="120"
-                    min="1"
-                    step="10"
-                    class="appearance-none hover:placeholder-shown:bg-emerald-500 bg-gray-50 text-pink-400 ring-0 outline-none border border-neutral-500 text-neutral-900 placeholder-violet-700 text-sm font-bold rounded-lg focus:ring-violet-500 focus:border-violet-500 block w-full p-2.5 h-11"
-                  />
-                </div>
+                <label for="speedSlider">播放速度 (單位/分鐘):</label>
+                <md-slider
+                    id="speedSlider"
+                    labeled
+                    step="100"
+                    min="100"
+                    max="1000"
+                    value="400"
+                    aria-label="播放速度滑塊"></md-slider>
             </div>
             <div class="control-group">
                 <label for="splitModeSelect">切割模式:</label>
@@ -86,17 +110,38 @@
                 <input type="color" id="bgColorPicker" value="#F5F5DC">
             </div>
         </div>
-        <div id="status">請輸入文字</div>
+        <div id="status">請輸入文字或生成文章</div>
     </div>
 
-    <div class="container">
+    <!-- Content Display Area -->
+    <div class="container" id="display-container">
         <h2>正在顯示的內容:</h2>
         <div id="currentWordDisplay"></div>
+        <!-- Play/Stop buttons moved here -->
+        <div class="button-container">
+            <md-elevated-button id="playButton" disabled>開始播放</md-elevated-button>
+            <md-elevated-button id="stopButton" disabled>停止</md-elevated-button>
+        </div>
+    </div>
+</div>
+
+    <!-- AI Question Section moved to the bottom -->
+    <div class="container" id="ai-section">
+        <div id="question-container">
+            <h2>提交答案：</h2>
+            <textarea id="answerInput" placeholder="請在此輸入您的答案..."></textarea>
+            <md-elevated-button id="submitAnswerButton">提交答案</md-elevated-button>
+            <p id="feedback"></p>
+        </div>
+        <div id="full-article-container" class="hidden">
+            <h2>全文：</h2>
+            <p id="fullArticle"></p>
+        </div>
     </div>
 
     <div id="box"></div>
 
-    <script src="BlurGradientBg.min.js"></script>
-    <script src="script.js"></script>
+    <script src="AestheticFluidBg.min.js"></script>
+    <script type="module" src="dist/bundle.js"></script>
 </body>
 </html>

@@ -1,8 +1,29 @@
+import '@material/web/button/elevated-button.js';
+import '@material/web/radio/radio.js';
+import '@material/web/checkbox/checkbox.js';
+import '@material/web/textfield/outlined-text-field.js';
+import '@material/web/slider/slider.js';
+import { styles as typescaleStyles } from '@material/web/typography/md-typescale-styles.js';
+
+document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+
+import OpenAI from "openai";
+
+// This is a placeholder for the API key.
+// In a real application, you would use a more secure way to handle this,
+// such as environment variables on a server.
+const openai = new OpenAI({
+        baseURL: 'https://api.deepseek.com/v1',
+        apiKey: process.env.DEEPSEEK_API_KEY,
+        dangerouslyAllowBrowser: true
+});
+
 let background;
 let displayUnits = [];
 let currentUnitIndex = 0;
 let isPlaying = false;
 let displayTimer = null;
+let fullArticle = '';
 
 // Regex for word/char mode (Chinese chars, Bopomofo, English words, numbers)
 const wordTokenRegex = /[\u4e00-\u9fa5\u3105-\u3129\u02CA\u02C7\u02CB\u02D9]|[a-zA-Z0-9]+/g;
@@ -10,15 +31,126 @@ const wordTokenRegex = /[\u4e00-\u9fa5\u3105-\u3129\u02CA\u02C7\u02CB\u02D9]|[a-
 let textInput;
 let playButton;
 let stopButton;
-let speedInput;
+let speedSlider;
 let statusDiv;
 let currentWordDisplay;
 let splitModeSelect;
 let fontColorPicker;
 let bgColorPicker;
+let difficultyRadios;
+let generateArticleButton;
+let aiSection;
+let questionContainer;
+let questionP;
+let answerInput;
+let submitAnswerButton;
+let feedbackP;
+let fullArticleContainer;
+let fullArticleP;
 
-function updateDisplayUnits() {
-    const text = textInput.value.trim();
+async function generateArticle() {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey || apiKey === "<請填寫您的 DeepSeek API Key>") {
+        statusDiv.textContent = '請在 .env 檔案中設定您的 DeepSeek API 金鑰，然後重新整理頁面。';
+        return;
+    }
+
+    const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+    let articleLength;
+
+    switch (difficulty) {
+        case 'easy':
+            articleLength = 100;
+            break;
+        case 'medium':
+            articleLength = 300;
+            break;
+        case 'hard':
+            articleLength = 500;
+            break;
+    }
+
+    statusDiv.textContent = '正在生成文章...';
+    generateArticleButton.disabled = true;
+    aiSection.classList.add('hidden');
+    questionContainer.classList.add('hidden');
+    fullArticleContainer.classList.add('hidden');
+    feedbackP.textContent = '';
+    answerInput.value = '';
+
+    try {
+        const completion = await openai.chat.completions.create({
+            messages: [{ role: "system", content: `請生成一篇長度約為 ${articleLength} 字的中文文章，並在文章最後生成一個與內文相關的封閉性問題。` }],
+            model: "deepseek-chat",
+        });
+
+        const response = completion.choices[0].message.content;
+        const lastQuestionMarkIndex = response.lastIndexOf('？');
+        
+        aiSection.classList.remove('hidden');
+        questionContainer.classList.remove('hidden');
+
+        if (lastQuestionMarkIndex !== -1) {
+            fullArticle = response.substring(0, lastQuestionMarkIndex + 1);
+            const question = response.substring(lastQuestionMarkIndex + 1).trim();
+            questionP.textContent = question;
+            statusDiv.textContent = 'AI 文章已生成，請回答問題。';
+        } else {
+            fullArticle = response;
+            questionP.textContent = '無法從生成內容中提取問題。';
+            statusDiv.textContent = 'AI 文章已生成。';
+        }
+        
+        textInput.value = ''; // Keep text area empty
+        updateDisplayUnits(fullArticle); // Prepare for playback
+
+    } catch (error) {
+        console.error('Error generating article:', error);
+        statusDiv.textContent = `生成文章失敗: ${error.message}`;
+    } finally {
+        generateArticleButton.disabled = false;
+    }
+}
+
+async function checkAnswer() {
+    const answer = answerInput.value.trim();
+    if (!answer) {
+        feedbackP.textContent = '請輸入答案。';
+        return;
+    }
+
+    feedbackP.textContent = '正在檢查答案...';
+    submitAnswerButton.disabled = true;
+
+    try {
+        const completion = await openai.chat.completions.create({
+            messages: [
+                { role: "system", content: "You are a helpful assistant." },
+                { role: "user", content: `這是文章：${fullArticle}` },
+                { role: "user", content: `這是問題：${questionP.textContent}` },
+                { role: "user", content: `這是使用者的回答：${answer}` },
+                { role: "user", content: `請判斷這個回答是否正確，並簡短地用中文回答「正確」或「不正確，原因是...」。` }
+            ],
+            model: "deepseek-chat",
+        });
+
+        feedbackP.textContent = completion.choices[0].message.content;
+        fullArticleP.textContent = fullArticle;
+        fullArticleContainer.classList.remove('hidden');
+        textInput.value = fullArticle;
+        updateDisplayUnits();
+
+    } catch (error) {
+        console.error('Error checking answer:', error);
+        feedbackP.textContent = '檢查答案失敗。';
+    } finally {
+        submitAnswerButton.disabled = false;
+    }
+}
+
+
+function updateDisplayUnits(sourceText = null) {
+    const text = (sourceText !== null) ? sourceText.trim() : textInput.value.trim();
     const currentSplitMode = splitModeSelect.value;
 
     if (currentSplitMode === 'word') {
@@ -109,7 +241,7 @@ function playNextUnit() {
     }
 
 
-    const tokensPerMinute = parseInt(speedInput.value) || 120; 
+    const tokensPerMinute = parseInt(speedSlider.value) || 120; 
     const safeTokensPerMinute = Math.max(1, tokensPerMinute); 
     const delay = (60 / safeTokensPerMinute) * 1000; 
 
@@ -128,7 +260,7 @@ function stopPlaying() {
     }
     
     textInput.disabled = false;
-    speedInput.disabled = false;
+    speedSlider.disabled = false;
     splitModeSelect.disabled = false;
     fontColorPicker.disabled = false;
     bgColorPicker.disabled = false;
@@ -152,12 +284,23 @@ function initializeApp() {
     textInput = document.getElementById('textInput');
     playButton = document.getElementById('playButton');
     stopButton = document.getElementById('stopButton');
-    speedInput = document.getElementById('speedInput');
+    speedSlider = document.getElementById('speedSlider');
     statusDiv = document.getElementById('status');
     currentWordDisplay = document.getElementById('currentWordDisplay');
     splitModeSelect = document.getElementById('splitModeSelect');
     fontColorPicker = document.getElementById('fontColorPicker');
     bgColorPicker = document.getElementById('bgColorPicker');
+    difficultyRadios = document.getElementsByName('difficulty');
+    generateArticleButton = document.getElementById('generateArticleButton');
+    aiSection = document.getElementById('ai-section');
+    questionContainer = document.getElementById('question-container');
+    questionP = document.getElementById('question');
+    answerInput = document.getElementById('answerInput');
+    submitAnswerButton = document.getElementById('submitAnswerButton');
+    feedbackP = document.getElementById('feedback');
+    fullArticleContainer = document.getElementById('full-article-container');
+    fullArticleP = document.getElementById('fullArticle');
+
 
     textInput.addEventListener('input', updateDisplayUnits);
     splitModeSelect.addEventListener('change', () => {
@@ -194,7 +337,7 @@ function initializeApp() {
         playButton.disabled = true;
         stopButton.disabled = false;
         textInput.disabled = true;
-        speedInput.disabled = true;
+        speedSlider.disabled = true;
         splitModeSelect.disabled = true;
         fontColorPicker.disabled = true;
         bgColorPicker.disabled = true;
@@ -207,6 +350,9 @@ function initializeApp() {
         stopPlaying();
     });
 
+    generateArticleButton.addEventListener('click', generateArticle);
+    submitAnswerButton.addEventListener('click', checkAnswer);
+
     window.addEventListener('beforeunload', () => {
         if (isPlaying) {
             stopPlaying();
@@ -217,11 +363,46 @@ function initializeApp() {
     currentWordDisplay.style.backgroundColor = bgColorPicker.value;
     updateDisplayUnits(); 
 
-    background = new Color4Bg.BlurGradientBg({
-        dom: "box",
-        colors: ["#B3E6F3","#F4D1E5","#FBF6D2"],
-        loop: true
-    });
+    try {
+        background = new Color4Bg.AestheticFluidBg({
+            dom: "box",
+            colors: ["#C3ECF7","#D2F7F7","#F9F9EF","#FFE3EE","#F5D5F7","#C3ECF7"],
+            loop: true
+        });
+    } catch (e) {
+        console.error("Failed to initialize background animation:", e);
+        // Find the element with id "box" and hide it if the animation fails
+        const boxElement = document.getElementById('box');
+        if (boxElement) {
+            boxElement.style.display = 'none';
+        }
+    }
+
+    const radio1 = document.getElementById('radio-1');
+    const radio2 = document.getElementById('radio-2');
+    const aiGenerateTab = document.getElementById('ai-generate');
+    const manualInputTab = document.getElementById('manual-input');
+
+    function handleTabSwitch() {
+        const isAiTab = radio1.checked;
+        aiGenerateTab.classList.toggle('hidden', !isAiTab);
+        manualInputTab.classList.toggle('hidden', isAiTab);
+        aiSection.classList.toggle('hidden', !isAiTab);
+    }
+
+    radio1.addEventListener('change', handleTabSwitch);
+    radio2.addEventListener('change', handleTabSwitch);
+
+    // Set initial state
+    handleTabSwitch();
+
+    for (const radio of difficultyRadios) {
+        radio.addEventListener('change', () => {
+            // This is just for debugging, but it might fix the issue
+            // if the browser needs a JS event to re-render the CSS.
+            console.log('Difficulty changed to:', document.querySelector('input[name="difficulty"]:checked').value);
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initializeApp);
