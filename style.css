@@ -53,8 +53,7 @@ h2 {
     border: 1px solid var(--border-color);
 }
 
-textarea,
-.control-group input[type="number"] {
+textarea {
     width: 100%;
     padding: 12px;
     border: 1px solid var(--border-color);
@@ -72,7 +71,6 @@ textarea {
 }
 
 textarea:focus,
-.control-group input[type="number"]:focus,
 .control-group select:focus {
     outline: none;
     border-color: var(--accent-color);
