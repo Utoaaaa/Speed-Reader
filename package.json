@@ -4,9 +4,9 @@
   "main": "AestheticFluidBg.min.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:tailwind": "postcss ./style.css -o ./dist/output.css --watch",
+    "build:css": "postcss ./style.css -o ./dist/output.css",
     "start": "http-server .",
-    "build": "node build.js"
+    "build": "npm run build:css && node build.js"
   },
   "keywords": [],
   "author": "",
