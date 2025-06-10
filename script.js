@@ -24,8 +24,8 @@ function updateDisplayUnits() {
     if (currentSplitMode === 'word') {
         displayUnits = text.match(wordTokenRegex) || [];
         statusDiv.textContent = `共找到 ${displayUnits.length} 個可顯示字/詞 (已忽略標點)。`;
-    } else { // sentence mode - updated logic
-        const rawSentences = text.split(/[。！？；\n]+/);
+    } else { // sentence mode - updated logic (preserve punctuation)
+        const rawSentences = text.match(/[^。！？；\n]+[。！？；]?/g) || [];
         displayUnits = [];
         for (const initialSentence of rawSentences) {
             const trimmedInitialSentence = initialSentence.trim();
