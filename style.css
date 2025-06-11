@@ -158,6 +158,7 @@ textarea:focus,
     padding: 4px;
     cursor: pointer;
     background-color: transparent;
+    border: none; /* 移除瀏覽器預設的邊框 */
     box-sizing: border-box;
 }
 .control-group input[type="color"]::-webkit-color-swatch {
