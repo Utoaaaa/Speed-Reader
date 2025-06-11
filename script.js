@@ -34,14 +34,13 @@ let stopButton;
 let speedSlider;
 let statusDiv;
 let currentWordDisplay;
-let splitModeSelect;
+let splitModeRadios;
 let fontColorPicker;
 let bgColorPicker;
 let difficultyRadios;
 let generateArticleButton;
 let aiSection;
 let questionContainer;
-let questionP;
 let answerInput;
 let submitAnswerButton;
 let feedbackP;
@@ -92,13 +91,13 @@ async function generateArticle() {
 
         if (lastQuestionMarkIndex !== -1) {
             fullArticle = response.substring(0, lastQuestionMarkIndex + 1);
-            const question = response.substring(lastQuestionMarkIndex + 1).trim();
-            questionP.textContent = question;
-            statusDiv.textContent = 'AI 文章已生成，請回答問題。';
+            // const question = response.substring(lastQuestionMarkIndex + 1).trim();
+            // questionP.textContent = question;
+            // statusDiv.textContent = '生成完成，AI 文章已生成，請回答問題。';
         } else {
             fullArticle = response;
-            questionP.textContent = '無法從生成內容中提取問題。';
-            statusDiv.textContent = 'AI 文章已生成。';
+            // questionP.textContent = '無法從生成內容中提取問題。';
+            // statusDiv.textContent = '生成完成，AI 文章已生成。';
         }
         
         textInput.value = ''; // Keep text area empty
@@ -127,7 +126,6 @@ async function checkAnswer() {
             messages: [
                 { role: "system", content: "You are a helpful assistant." },
                 { role: "user", content: `這是文章：${fullArticle}` },
-                { role: "user", content: `這是問題：${questionP.textContent}` },
                 { role: "user", content: `這是使用者的回答：${answer}` },
                 { role: "user", content: `請判斷這個回答是否正確，並簡短地用中文回答「正確」或「不正確，原因是...」。` }
             ],
@@ -150,59 +148,70 @@ async function checkAnswer() {
 
 
 function updateDisplayUnits(sourceText = null) {
-    const text = (sourceText !== null) ? sourceText.trim() : textInput.value.trim();
-    const currentSplitMode = splitModeSelect.value;
+    const isAiTab = document.getElementById('radio-1').checked;
+    let textToProcess = '';
+
+    if (sourceText !== null) {
+        textToProcess = sourceText.trim();
+    } else {
+        textToProcess = isAiTab ? fullArticle.trim() : textInput.value.trim();
+    }
+
+    const currentSplitMode = document.querySelector('input[name="splitMode"]:checked').value;
 
     if (currentSplitMode === 'word') {
-        displayUnits = text.match(wordTokenRegex) || [];
-        statusDiv.textContent = `共找到 ${displayUnits.length} 個可顯示字/詞 (已忽略標點)。`;
-    } else { // sentence mode - updated logic (preserve punctuation)
-        const rawSentences = text.match(/[^。！？；\n]+[。！？；]?/g) || [];
+        displayUnits = textToProcess.match(wordTokenRegex) || [];
+    } else { // sentence mode
+        const rawSentences = textToProcess.match(/[^。！？；\n]+[。！？；]?/g) || [];
         displayUnits = [];
         for (const initialSentence of rawSentences) {
             const trimmedInitialSentence = initialSentence.trim();
             if (trimmedInitialSentence.length === 0) {
                 continue;
             }
-
             let currentIndexInSentence = 0;
             while (currentIndexInSentence < trimmedInitialSentence.length) {
                 let nextCommaIndex = trimmedInitialSentence.indexOf('，', currentIndexInSentence);
-
                 if (nextCommaIndex !== -1) {
-                    // Found a comma. Segment includes the comma.
                     const segment = trimmedInitialSentence.substring(currentIndexInSentence, nextCommaIndex + 1);
-                    if (segment.trim().length > 0) { // Ensure segment is not just whitespace
+                    if (segment.trim().length > 0) {
                         displayUnits.push(segment.trim());
                     }
                     currentIndexInSentence = nextCommaIndex + 1;
                 } else {
-                    // No more commas in the rest of this initialSentence segment
                     const segment = trimmedInitialSentence.substring(currentIndexInSentence);
-                    if (segment.trim().length > 0) { // Ensure non-empty segment
+                    if (segment.trim().length > 0) {
                         displayUnits.push(segment.trim());
                     }
-                    break; // Exit while loop for this initialSentence
+                    break;
                 }
             }
         }
-        // Final filter for any empty strings, though the logic above tries to prevent them
         displayUnits = displayUnits.filter(s => s.length > 0);
-        statusDiv.textContent = `共找到 ${displayUnits.length} 個顯示段落。`;
     }
-    
+
+    playButton.disabled = displayUnits.length === 0;
+
     if (displayUnits.length > 0) {
-        playButton.disabled = false;
-    } else {
-        playButton.disabled = true;
         if (currentSplitMode === 'word') {
-            statusDiv.textContent = '請輸入可播放的文字 (字/詞模式)。';
+            statusDiv.textContent = `共找到 ${displayUnits.length} 個可顯示字/詞 (已忽略標點)。`;
         } else {
-            statusDiv.textContent = '請輸入可播放的文字 (句子/段落模式)。';
+            statusDiv.textContent = `共找到 ${displayUnits.length} 個顯示段落。`;
+        }
+    } else {
+        if (isAiTab) {
+            statusDiv.textContent = '';
+        } else {
+            if (currentSplitMode === 'word') {
+                statusDiv.textContent = '請輸入可播放的文字 (字/詞模式)。';
+            } else {
+                statusDiv.textContent = '請輸入可播放的文字 (句子/段落模式)。';
+            }
         }
     }
+
     currentUnitIndex = 0;
-    if (!isPlaying) { 
+    if (!isPlaying) {
         currentWordDisplay.textContent = '';
     }
 }
@@ -221,7 +230,7 @@ function playNextUnit() {
 
     // Adjust font size dynamically for Apple-style UI
     const baseFontSizeVW = 7; 
-    if (splitModeSelect.value === 'sentence') {
+    if (document.querySelector('input[name="splitMode"]:checked').value === 'sentence') {
         let fontSize = baseFontSizeVW;
         if (currentToken.length > 40) {
             fontSize = baseFontSizeVW * 0.6;
@@ -245,7 +254,7 @@ function playNextUnit() {
     const safeTokensPerMinute = Math.max(1, tokensPerMinute); 
     const delay = (60 / safeTokensPerMinute) * 1000; 
 
-    console.log(`Displaying: "${currentToken}", Speed: ${tokensPerMinute} TPM, Delay: ${delay.toFixed(2)}ms, Mode: ${splitModeSelect.value}`);
+    console.log(`Displaying: "${currentToken}", Speed: ${tokensPerMinute} TPM, Delay: ${delay.toFixed(2)}ms, Mode: ${document.querySelector('input[name="splitMode"]:checked').value}`);
     
     currentUnitIndex++; 
 
@@ -261,7 +270,9 @@ function stopPlaying() {
     
     textInput.disabled = false;
     speedSlider.disabled = false;
-    splitModeSelect.disabled = false;
+    for (const radio of splitModeRadios) {
+        radio.disabled = false;
+    }
     fontColorPicker.disabled = false;
     bgColorPicker.disabled = false;
     stopButton.disabled = true;
@@ -287,14 +298,13 @@ function initializeApp() {
     speedSlider = document.getElementById('speedSlider');
     statusDiv = document.getElementById('status');
     currentWordDisplay = document.getElementById('currentWordDisplay');
-    splitModeSelect = document.getElementById('splitModeSelect');
+    splitModeRadios = document.getElementsByName('splitMode');
     fontColorPicker = document.getElementById('fontColorPicker');
     bgColorPicker = document.getElementById('bgColorPicker');
     difficultyRadios = document.getElementsByName('difficulty');
     generateArticleButton = document.getElementById('generateArticleButton');
     aiSection = document.getElementById('ai-section');
     questionContainer = document.getElementById('question-container');
-    questionP = document.getElementById('question');
     answerInput = document.getElementById('answerInput');
     submitAnswerButton = document.getElementById('submitAnswerButton');
     feedbackP = document.getElementById('feedback');
@@ -302,14 +312,32 @@ function initializeApp() {
     fullArticleP = document.getElementById('fullArticle');
 
 
-    textInput.addEventListener('input', updateDisplayUnits);
-    splitModeSelect.addEventListener('change', () => {
+    textInput.addEventListener('input', () => {
         updateDisplayUnits();
-        if (isPlaying) {
-            stopPlaying(); // Stop playback if mode changes
-            currentWordDisplay.textContent = ''; 
+        if (textInput.value.trim().length > 0) {
+            playButton.disabled = false;
+        } else {
+            playButton.disabled = true;
         }
     });
+
+    answerInput.addEventListener('input', () => {
+        if (answerInput.value.trim().length > 0) {
+            submitAnswerButton.disabled = false;
+        } else {
+            submitAnswerButton.disabled = true;
+        }
+    });
+
+    for (const radio of splitModeRadios) {
+        radio.addEventListener('change', () => {
+            updateDisplayUnits();
+            if (isPlaying) {
+                stopPlaying(); // Stop playback if mode changes
+                currentWordDisplay.textContent = '';
+            }
+        });
+    }
 
     fontColorPicker.addEventListener('input', (event) => {
         currentWordDisplay.style.color = event.target.value;
@@ -338,7 +366,9 @@ function initializeApp() {
         stopButton.disabled = false;
         textInput.disabled = true;
         speedSlider.disabled = true;
-        splitModeSelect.disabled = true;
+        for (const radio of splitModeRadios) {
+            radio.disabled = true;
+        }
         fontColorPicker.disabled = true;
         bgColorPicker.disabled = true;
         statusDiv.textContent = '正在播放...';
@@ -388,6 +418,8 @@ function initializeApp() {
         aiGenerateTab.classList.toggle('hidden', !isAiTab);
         manualInputTab.classList.toggle('hidden', isAiTab);
         aiSection.classList.toggle('hidden', !isAiTab);
+        // When switching tabs, update the display units based on the new context
+        updateDisplayUnits(); 
     }
 
     radio1.addEventListener('change', handleTabSwitch);

@@ -9,9 +9,23 @@
     <link rel="stylesheet" href="dist/output.css">
     <style>
         md-elevated-button {
-            --md-elevated-button-container-color: #FFFBEB;
+            --md-elevated-button-container-color: #e9faff;
             --md-elevated-button-label-text-color: #000000;
+            --md-elevated-button-pressed-state-layer-color: #78aeff; /* 紫色 */
+            --md-elevated-button-hover-label-text-color: rgb(95, 95, 95);
+            --md-elevated-button-hover-state-layer-color: #c8dbff; /* 深藍 */
+            --md-elevated-button-hover-state-layer-opacity: 1;
             width: 150px;
+        }
+        md-slider {
+            /* 根據圖片調整顏色 */
+            --md-slider-handle-color: #1976d2; /* 控制點: 紫色 */
+            --md-slider-label-container-color: #1976d2; /* 標籤: 紫色 */
+            --md-slider-active-track-color: #1976d2; /* 已啟用軌道: 深藍 */
+            --md-slider-inactive-track-color: #BBDEFB; /* 未啟用軌道: 淺藍 */
+            --md-slider-hover-handle-color: #BBDEFB; /* 懸停時控制點: 淺藍 */
+            --md-slider-focus-handle-color: #BBDEFB; /* 聚焦時控制點: 淺藍 */
+            --md-slider-pressed-handle-color: #BBDEFB; /* 按下時控制點: 淺藍 */
         }
     </style>
 </head>
@@ -21,7 +35,7 @@
 
     <div class="main-layout">
         <div class="container" id="settings-container">
-	<div class="tabs">
+	<div class="tabs main-tabs">
 		<input type="radio" id="radio-1" name="tabs" checked="">
 		<label class="tab" for="radio-1">AI 生成</label>
 		<input type="radio" id="radio-2" name="tabs">
@@ -30,12 +44,13 @@
 	</div>
 
         <!-- AI Generate Tab Content -->
-        <div id="ai-generate" class="tab-content">
+        <div id="ai-generate" class="tab-content ">
             <div id="ai-controls">
                 <h2>AI 生成文章</h2>
+                <md-elevated-button id="generateArticleButton">生成文章</md-elevated-button>
                 <div class="control-group">
                     <label>難易度:</label>
-                    <div class="tabs difficulty-tabs">
+                    <div class="tabs">
                         <input type="radio" id="diff-easy" name="difficulty" value="easy" checked>
                         <label class="tab" for="diff-easy">簡單</label>
                         <input type="radio" id="diff-medium" name="difficulty" value="medium">
@@ -45,7 +60,6 @@
                         <span class="glider"></span>
                     </div>
                 </div>
-                <md-elevated-button id="generateArticleButton">生成文章</md-elevated-button>
             </div>
         </div>
 
@@ -56,61 +70,29 @@
         </div>
 
         <!-- Common Controls -->
-        <div class="controls-grid">
-            <div class="control-group">
-                <label for="speedSlider">播放速度 (單位/分鐘):</label>
-                <md-slider
-                    id="speedSlider"
-                    labeled
-                    step="100"
-                    min="100"
-                    max="1000"
-                    value="400"
-                    aria-label="播放速度滑塊"></md-slider>
-            </div>
-            <div class="control-group">
-                <label for="splitModeSelect">切割模式:</label>
-                <div
-                  class="relative group rounded-lg bg-gray-50 overflow-hidden before:absolute before:w-12 before:h-12 before:content[''] before:right-0 before:bg-violet-500 before:rounded-full before:blur-lg before:[box-shadow:-60px_20px_10px_10px_#F9B0B9]"
-                >
-                  <svg
-                    y="0"
-                    xmlns="http://www.w3.org/2000/svg"
-                    x="0"
-                    width="100"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="xMidYMid meet"
-                    height="100"
-                    class="w-8 h-8 absolute right-0 -rotate-45 stroke-pink-300 top-1.5 group-hover:rotate-0 duration-300"
-                  >
-                    <path
-                      stroke-width="4"
-                      stroke-linejoin="round"
-                      stroke-linecap="round"
-                      fill="none"
-                      d="M60.7,53.6,50,64.3m0,0L39.3,53.6M50,64.3V35.7m0,46.4A32.1,32.1,0,1,1,82.1,50,32.1,32.1,0,0,1,50,82.1Z"
-                      class="svg-stroke-primary"
-                    ></path>
-                  </svg>
-                  <select
-                    id="splitModeSelect"
-                    class="appearance-none hover:placeholder-shown:bg-emerald-500 relative text-pink-400 bg-transparent ring-0 outline-none border border-neutral-500 text-neutral-900 placeholder-violet-700 text-sm font-bold rounded-lg focus:ring-violet-500 focus:border-violet-500 block w-full p-2.5 h-11"
-                  >
-                    <option value="word">一個字/詞</option>
-                    <option value="sentence">一句話</option>
-                  </select>
-                </div>
-            </div>
-            <div class="control-group">
-                <label for="fontColorPicker">字體顏色:</label>
-                <input type="color" id="fontColorPicker" value="#222222">
-            </div>
-            <div class="control-group">
-                <label for="bgColorPicker">背景顏色:</label>
-                <input type="color" id="bgColorPicker" value="#F5F5DC">
+        <div class="control-group" style="margin-top: 1rem;">
+            <label>切割模式:</label>
+            <div class="tabs">
+                <input type="radio" id="split-word" name="splitMode" value="word" checked="">
+                <label class="tab" for="split-word">一個字/詞</label>
+                <input type="radio" id="split-sentence" name="splitMode" value="sentence">
+                <label class="tab" for="split-sentence">一句話</label>
+                <span class="glider"></span>
             </div>
         </div>
-        <div id="status">請輸入文字或生成文章</div>
+        <div class="control-group" style="margin-top: 1rem;">
+            <label for="speedSlider">播放速度 (單位/分鐘):</label>
+            <md-slider
+                id="speedSlider"
+                labeled
+                step="100"
+                min="100"
+                max="1000"
+                value="500"
+                aria-label="播放速度滑塊"
+                style="width: 248px; margin-left: -8px;"></md-slider>
+        </div>
+        <div id="status"></div>
     </div>
 
     <!-- Content Display Area -->
@@ -122,6 +104,17 @@
             <md-elevated-button id="playButton" disabled>開始播放</md-elevated-button>
             <md-elevated-button id="stopButton" disabled>停止</md-elevated-button>
         </div>
+        <!-- Color Pickers moved here -->
+        <div class="controls-grid" style="margin-top: 1.5rem;">
+            <div class="control-group">
+                <label for="fontColorPicker">字體顏色:</label>
+                <input type="color" id="fontColorPicker" value="#474747">
+            </div>
+            <div class="control-group">
+                <label for="bgColorPicker">背景顏色:</label>
+                <input type="color" id="bgColorPicker" value="#F5F5DC">
+            </div>
+        </div>
     </div>
 </div>
 
@@ -130,11 +123,11 @@
         <div id="question-container">
             <h2>提交答案：</h2>
             <textarea id="answerInput" placeholder="請在此輸入您的答案..."></textarea>
-            <md-elevated-button id="submitAnswerButton">提交答案</md-elevated-button>
+            <md-elevated-button id="submitAnswerButton" disabled>提交答案</md-elevated-button>
             <p id="feedback"></p>
         </div>
         <div id="full-article-container" class="hidden">
-            <h2>全文：</h2>
+            <h2>文章全文：</h2>
             <p id="fullArticle"></p>
         </div>
     </div>
