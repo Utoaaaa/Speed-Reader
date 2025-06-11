@@ -7,16 +7,6 @@ import { styles as typescaleStyles } from '@material/web/typography/md-typescale
 
 document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
 
-import OpenAI from "openai";
-
-// This is a placeholder for the API key.
-// In a real application, you would use a more secure way to handle this,
-// such as environment variables on a server.
-const openai = new OpenAI({
-        baseURL: 'https://api.deepseek.com/v1',
-        apiKey: process.env.DEEPSEEK_API_KEY,
-        dangerouslyAllowBrowser: true
-});
 
 let background;
 let displayUnits = [];
@@ -48,12 +38,6 @@ let fullArticleContainer;
 let fullArticleP;
 
 async function generateArticle() {
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey || apiKey === "<請填寫您的 DeepSeek API Key>") {
-        statusDiv.textContent = '請在 .env 檔案中設定您的 DeepSeek API 金鑰，然後重新整理頁面。';
-        return;
-    }
-
     const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
     let articleLength;
 
@@ -78,24 +62,36 @@ async function generateArticle() {
     answerInput.value = '';
 
     try {
-        const completion = await openai.chat.completions.create({
-            messages: [{ role: "system", content: `請生成一篇長度約為 ${articleLength} 字的中文文章，並在文章最後生成一個與內文相關的封閉性問題。` }],
-            model: "deepseek-chat",
+        const response = await fetch('/api/deepseek', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                messages: [{ role: "system", content: `請生成一篇長度約為 ${articleLength} 字的中文文章，並在文章最後生成一個與內文相關的封閉性問題。` }],
+                model: "deepseek-chat",
+            }),
         });
 
-        const response = completion.choices[0].message.content;
-        const lastQuestionMarkIndex = response.lastIndexOf('？');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || JSON.stringify(errorData));
+        }
+
+        const completion = await response.json();
+        const responseText = completion.choices[0].message.content;
+        const lastQuestionMarkIndex = responseText.lastIndexOf('？');
         
         aiSection.classList.remove('hidden');
         questionContainer.classList.remove('hidden');
 
         if (lastQuestionMarkIndex !== -1) {
-            fullArticle = response.substring(0, lastQuestionMarkIndex + 1);
-            // const question = response.substring(lastQuestionMarkIndex + 1).trim();
+            fullArticle = responseText.substring(0, lastQuestionMarkIndex + 1);
+            // const question = responseText.substring(lastQuestionMarkIndex + 1).trim();
             // questionP.textContent = question;
             // statusDiv.textContent = '生成完成，AI 文章已生成，請回答問題。';
         } else {
-            fullArticle = response;
+            fullArticle = responseText;
             // questionP.textContent = '無法從生成內容中提取問題。';
             // statusDiv.textContent = '生成完成，AI 文章已生成。';
         }
@@ -122,16 +118,28 @@ async function checkAnswer() {
     submitAnswerButton.disabled = true;
 
     try {
-        const completion = await openai.chat.completions.create({
-            messages: [
-                { role: "system", content: "You are a helpful assistant." },
-                { role: "user", content: `這是文章：${fullArticle}` },
-                { role: "user", content: `這是使用者的回答：${answer}` },
-                { role: "user", content: `請判斷這個回答是否正確，並簡短地用中文回答「正確」或「不正確，原因是...」。` }
-            ],
-            model: "deepseek-chat",
+        const response = await fetch('/api/deepseek', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                messages: [
+                    { role: "system", content: "You are a helpful assistant." },
+                    { role: "user", content: `這是文章：${fullArticle}` },
+                    { role: "user", content: `這是使用者的回答：${answer}` },
+                    { role: "user", content: `請判斷這個回答是否正確，並簡短地用中文回答「正確」或「不正確，原因是...」。` }
+                ],
+                model: "deepseek-chat",
+            }),
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || JSON.stringify(errorData));
+        }
+        
+        const completion = await response.json();
         feedbackP.textContent = completion.choices[0].message.content;
         fullArticleP.textContent = fullArticle;
         fullArticleContainer.classList.remove('hidden');
@@ -140,7 +148,7 @@ async function checkAnswer() {
 
     } catch (error) {
         console.error('Error checking answer:', error);
-        feedbackP.textContent = '檢查答案失敗。';
+        feedbackP.textContent = `檢查答案失敗: ${error.message}`;
     } finally {
         submitAnswerButton.disabled = false;
     }

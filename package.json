@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:css": "postcss ./style.css -o ./dist/output.css",
     "start": "http-server .",
-    "build": "npm run build:css && node build.js"
+    "build": "npm run build:css && node build.js",
+    "dev": "echo \"Please provide the API key. Example: DEEPSEEK_API_KEY=your_key_here npm run dev\" && wrangler pages dev"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +19,9 @@
     "http-server": "^14.1.1",
     "postcss": "^8.5.4",
     "postcss-cli": "^11.0.1",
-    "tailwindcss": "^4.1.8"
+    "tailwindcss": "^4.1.8",
+    "wrangler": "^3.0.0",
+    "dotenv-cli": "^7.4.2"
   },
   "dependencies": {
     "@material/web": "^2.3.0",

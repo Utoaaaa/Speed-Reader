@@ -1,0 +1,11 @@
+name = "speed-reader"
+pages_build_output_dir = "dist"
+
+# For local development, you can temporarily add variables here.
+# Example:
+# [vars]
+# DEEPSEEK_API_KEY = "your_key_here"
+#
+# !!! WARNING: DO NOT COMMIT THIS FILE WITH SECRETS IN IT !!!
+# !!! It is recommended to solve the environment variable issue !!!
+# !!! or add this file to .gitignore if you use it for local secrets. !!!

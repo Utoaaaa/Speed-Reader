@@ -1,3 +1,11 @@
-.env
+# Node
 node_modules
+
+# Build output
 /dist
+
+# Environment variables
+.env
+
+# Wrangler
+.wrangler/
