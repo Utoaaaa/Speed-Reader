@@ -11,7 +11,9 @@ if (!fs.existsSync(distDir)) {
 
 // 處理 index.html：讀取、修改路徑並寫入 dist
 let indexContent = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
-indexContent = indexContent.replace(/href="dist\//g, 'href="').replace(/src="dist\//g, 'src="');
+// 這個正則表達式會找到 href="..." 或 src="..." 中的路徑，
+// 並移除所有路徑前綴 (如 ./, dist/, ./dist/)，只留下檔案名稱。
+indexContent = indexContent.replace(/(href|src)="\.\/(dist\/)?/g, '$1="');
 fs.writeFileSync(path.join(distDir, 'index.html'), indexContent);
 
 // 複製其他必要的根目錄檔案到 dist
