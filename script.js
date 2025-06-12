@@ -109,7 +109,12 @@ async function generateArticle() {
 
     } catch (error) {
         console.error('Error generating article:', error);
-        statusDiv.textContent = `生成文章失敗: ${error.message}`;
+        let displayError = error.message;
+        // 檢查錯誤訊息是否為 HTML
+        if (displayError.trim().startsWith('<!DOCTYPE html>')) {
+            displayError = '與後端服務的連線逾時，請稍後再試。(Error 522)';
+        }
+        statusDiv.textContent = `生成文章失敗: ${displayError}`;
     } finally {
         generateArticleButton.disabled = false;
     }
@@ -164,7 +169,12 @@ async function checkAnswer() {
 
     } catch (error) {
         console.error('Error checking answer:', error);
-        feedbackP.textContent = `檢查答案失敗: ${error.message}`;
+        let displayError = error.message;
+        // 檢查錯誤訊息是否為 HTML
+        if (displayError.trim().startsWith('<!DOCTYPE html>')) {
+            displayError = '與後端服務的連線逾時，請稍後再試。(Error 522)';
+        }
+        feedbackP.textContent = `檢查答案失敗: ${displayError}`;
     } finally {
         submitAnswerButton.disabled = false;
     }
