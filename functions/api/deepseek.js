@@ -20,81 +20,52 @@ export async function onRequest(context) {
   // 處理 POST 請求
   if (request.method === 'POST') {
     // 從環境變數中安全地獲取 API Key
-    // 這是最終的、最防禦性的寫法，應對所有可能的平台行為
+    // 這裡我們假設儲存的是 OpenRouter 的 API Key
     const apiKey = context.env.DEEPSEEK_API_KEY;
 
     if (!apiKey) {
-      console.error("DEEPSEEK_API_KEY not found in context.env.");
+      console.error("DEEPSEEK_API_KEY (for OpenRouter) not found in context.env.");
       return new Response(JSON.stringify({ error: 'API key not configured in Cloudflare Pages settings.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     try {
-      const requestBody = await request.json();
-      // 將 API Key 作為 Bearer Token 傳遞。
-      // 即使使用 AI Gateway，這種方式也是有效的，Gateway 會將此 header 轉發。
-      // 這確保了無論 API Key 儲存在 Pages 環境變數還是 Gateway Credentials 中，請求都能被正確認證。
+      const openRouterApiKey = apiKey; 
+      let requestBody = await request.json();
+
+      // 將模型名稱替換為 OpenRouter 指定的名稱
+      // 將模型名稱替換為 OpenRouter 指定的免費模型
+      requestBody.model = 'deepseek/deepseek-chat-v3-0324:free';
+
       const fetchOptions = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${openRouterApiKey}`,
+          'HTTP-Referer': 'https://speed-reader.6156150.xyz', // 建議替換為您的網站 URL
+          'X-Title': 'Speed Reader', // 建議替換為您的網站名稱
         },
         body: JSON.stringify(requestBody),
       };
 
-      const gatewayUrl = 'https://gateway.ai.cloudflare.com/v1/5df67fbdc8e3dd0cc085b6f25dd15915/deepseek/deepseek/chat/completions';
+      const openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
+      
+      console.log(`[${new Date().toISOString()}] Forwarding request to OpenRouter.`);
+      
+      const apiResponse = await fetch(openRouterUrl, fetchOptions);
 
-      let lastError = null;
-      const maxRetries = 3;
+      console.log(`[${new Date().toISOString()}] Received response from OpenRouter with status: ${apiResponse.status}`);
 
-      for (let i = 0; i < maxRetries; i++) {
-        try {
-          console.log(`[${new Date().toISOString()}] Attempt ${i + 1} of ${maxRetries}: Forwarding request via AI Gateway.`);
-          
-          const apiResponse = await fetch(gatewayUrl, fetchOptions);
-
-          console.log(`[${new Date().toISOString()}] Received response from DeepSeek API with status: ${apiResponse.status}`);
-
-          if (apiResponse.ok) {
-            // 如果成功，將回應串流回傳給前端
-            return new Response(apiResponse.body, {
-              status: apiResponse.status,
-              headers: {
-                ...corsHeaders,
-                'Content-Type': 'application/json',
-              },
-            });
-          } else {
-            // 如果是 4xx 或 5xx 錯誤，但不是超時，可能不需要重試
-            const errorText = await apiResponse.text();
-            lastError = new Error(`DeepSeek API Error: ${apiResponse.status} ${apiResponse.statusText} - ${errorText}`);
-            // 對於客戶端錯誤 (4xx)，通常不需要重試
-            if (apiResponse.status >= 400 && apiResponse.status < 500) {
-              console.error("Client error, breaking retry loop.", lastError);
-              break; 
-            }
-          }
-        } catch (error) {
-          lastError = error;
-          console.warn(`[${new Date().toISOString()}] Attempt ${i + 1} failed.`, error);
-        }
-
-        // 如果不是最後一次嘗試，則等待一段時間
-        if (i < maxRetries - 1) {
-          console.log(`Waiting 1 second before retry...`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-
-      // 如果所有重試都失敗了，回傳最後一個錯誤
-      console.error("All retries failed. Returning last known error.", lastError);
-      return new Response(JSON.stringify({ error: lastError.message }), { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      // 直接將 OpenRouter 的回應（無論成功或失敗）回傳給前端
+      return new Response(apiResponse.body, {
+        status: apiResponse.status,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': apiResponse.headers.get('Content-Type') || 'application/json',
+        },
       });
 
     } catch (error) {
-      console.error('Error in proxy function:', error);
+      console.error('Error in OpenRouter proxy function:', error);
       const errorResponse = {
         error: 'Internal Server Error in proxy function',
         message: error.message,
