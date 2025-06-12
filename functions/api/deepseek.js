@@ -30,6 +30,9 @@ export async function onRequest(context) {
 
     try {
       const requestBody = await request.json();
+      // 將 API Key 作為 Bearer Token 傳遞。
+      // 即使使用 AI Gateway，這種方式也是有效的，Gateway 會將此 header 轉發。
+      // 這確保了無論 API Key 儲存在 Pages 環境變數還是 Gateway Credentials 中，請求都能被正確認證。
       const fetchOptions = {
         method: 'POST',
         headers: {
@@ -39,14 +42,16 @@ export async function onRequest(context) {
         body: JSON.stringify(requestBody),
       };
 
+      const gatewayUrl = 'https://gateway.ai.cloudflare.com/v1/5df67fbdc8e3dd0cc085b6f25dd15915/deepseek/deepseek/chat/completions';
+
       let lastError = null;
       const maxRetries = 3;
 
       for (let i = 0; i < maxRetries; i++) {
         try {
-          console.log(`[${new Date().toISOString()}] Attempt ${i + 1} of ${maxRetries}: Forwarding request to DeepSeek API.`);
+          console.log(`[${new Date().toISOString()}] Attempt ${i + 1} of ${maxRetries}: Forwarding request via AI Gateway.`);
           
-          const apiResponse = await fetch('https://api.deepseek.com/v1/chat/completions', fetchOptions);
+          const apiResponse = await fetch(gatewayUrl, fetchOptions);
 
           console.log(`[${new Date().toISOString()}] Received response from DeepSeek API with status: ${apiResponse.status}`);
 
