@@ -74,8 +74,16 @@ async function generateArticle() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || JSON.stringify(errorData));
+            let errorText;
+            try {
+                // 嘗試解析 JSON 錯誤
+                const errorData = await response.json();
+                errorText = errorData.error || JSON.stringify(errorData);
+            } catch (e) {
+                // 如果解析 JSON 失敗，則讀取純文字
+                errorText = await response.text();
+            }
+            throw new Error(errorText);
         }
 
         const completion = await response.json();
@@ -135,8 +143,16 @@ async function checkAnswer() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || JSON.stringify(errorData));
+            let errorText;
+            try {
+                // 嘗試解析 JSON 錯誤
+                const errorData = await response.json();
+                errorText = errorData.error || JSON.stringify(errorData);
+            } catch (e) {
+                // 如果解析 JSON 失敗，則讀取純文字
+                errorText = await response.text();
+            }
+            throw new Error(errorText);
         }
         
         const completion = await response.json();

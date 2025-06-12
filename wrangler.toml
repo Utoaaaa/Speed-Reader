@@ -1,4 +1,5 @@
 name = "speed-reader"
+compatibility_date = "2024-05-01"
 pages_build_output_dir = "dist"
 
 # For local development, you can temporarily add variables here.
