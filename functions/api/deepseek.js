@@ -30,7 +30,6 @@ export async function onRequest(context) {
 
     try {
       const requestBody = await request.json();
-      
       const fetchOptions = {
         method: 'POST',
         headers: {
@@ -40,26 +39,53 @@ export async function onRequest(context) {
         body: JSON.stringify(requestBody),
       };
 
-      // 代理請求到 DeepSeek API
-      const apiResponse = await fetch('https://api.deepseek.com/v1/chat/completions', fetchOptions);
+      let lastError = null;
+      const maxRetries = 3;
 
-      // 檢查來自 DeepSeek API 的回應是否成功
-      if (!apiResponse.ok) {
-        const errorText = await apiResponse.text();
-        console.error(`Error from DeepSeek API: ${apiResponse.status} ${apiResponse.statusText}`, errorText);
-        return new Response(JSON.stringify({ error: `DeepSeek API Error: ${errorText}` }), { 
-          status: apiResponse.status, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        });
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          console.log(`[${new Date().toISOString()}] Attempt ${i + 1} of ${maxRetries}: Forwarding request to DeepSeek API.`);
+          
+          const apiResponse = await fetch('https://api.deepseek.com/v1/chat/completions', fetchOptions);
+
+          console.log(`[${new Date().toISOString()}] Received response from DeepSeek API with status: ${apiResponse.status}`);
+
+          if (apiResponse.ok) {
+            // 如果成功，將回應串流回傳給前端
+            return new Response(apiResponse.body, {
+              status: apiResponse.status,
+              headers: {
+                ...corsHeaders,
+                'Content-Type': 'application/json',
+              },
+            });
+          } else {
+            // 如果是 4xx 或 5xx 錯誤，但不是超時，可能不需要重試
+            const errorText = await apiResponse.text();
+            lastError = new Error(`DeepSeek API Error: ${apiResponse.status} ${apiResponse.statusText} - ${errorText}`);
+            // 對於客戶端錯誤 (4xx)，通常不需要重試
+            if (apiResponse.status >= 400 && apiResponse.status < 500) {
+              console.error("Client error, breaking retry loop.", lastError);
+              break; 
+            }
+          }
+        } catch (error) {
+          lastError = error;
+          console.warn(`[${new Date().toISOString()}] Attempt ${i + 1} failed.`, error);
+        }
+
+        // 如果不是最後一次嘗試，則等待一段時間
+        if (i < maxRetries - 1) {
+          console.log(`Waiting 1 second before retry...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
 
-      // 如果成功，將回應串流回傳給前端
-      return new Response(apiResponse.body, {
-        status: apiResponse.status,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
+      // 如果所有重試都失敗了，回傳最後一個錯誤
+      console.error("All retries failed. Returning last known error.", lastError);
+      return new Response(JSON.stringify({ error: lastError.message }), { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
 
     } catch (error) {
