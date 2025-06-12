@@ -76,8 +76,8 @@ async function generateArticle() {
         if (!response.ok) {
             let errorText;
             try {
-                // 嘗試解析 JSON 錯誤
-                const errorData = await response.json();
+                // 嘗試解析 JSON 錯誤，先複製回應以避免耗盡串流
+                const errorData = await response.clone().json();
                 errorText = errorData.error || JSON.stringify(errorData);
             } catch (e) {
                 // 如果解析 JSON 失敗，則讀取純文字
@@ -145,8 +145,8 @@ async function checkAnswer() {
         if (!response.ok) {
             let errorText;
             try {
-                // 嘗試解析 JSON 錯誤
-                const errorData = await response.json();
+                // 嘗試解析 JSON 錯誤，先複製回應以避免耗盡串流
+                const errorData = await response.clone().json();
                 errorText = errorData.error || JSON.stringify(errorData);
             } catch (e) {
                 // 如果解析 JSON 失敗，則讀取純文字
