@@ -62,7 +62,7 @@ async function generateArticle() {
     answerInput.value = '';
 
     try {
-        const response = await fetch('/api/deepseek', {
+        const response = await fetch('./api/deepseek', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ async function checkAnswer() {
     submitAnswerButton.disabled = true;
 
     try {
-        const response = await fetch('/api/deepseek', {
+        const response = await fetch('./api/deepseek', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

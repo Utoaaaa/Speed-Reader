@@ -10,9 +10,10 @@ async function handleRequest(request, env) {
   const url = new URL(request.url);
 
   // --- API 路由處理 ---
-  // 監聽 /api/deepseek 路徑
+  // 監聽 /api/deepseek 和 /speedreader/api/deepseek 路徑
   const API_PATH = '/api/deepseek';
-  if (url.pathname === API_PATH) {
+  const API_PATH_PREFIXED = '/speedreader/api/deepseek';
+  if (url.pathname === API_PATH || url.pathname === API_PATH_PREFIXED) {
     // 只允許 POST 方法
     if (request.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405 });
@@ -23,10 +24,12 @@ async function handleRequest(request, env) {
 
   // --- 靜態網站路由處理 ---
   const { pathname } = url;
-  let key = pathname;
+  // 移除 /speedreader 前綴以正確匹配靜態資源
+  let key = pathname.startsWith('/speedreader') ? pathname.substring('/speedreader'.length) : pathname;
+
 
   // 處理根目錄請求，指向 index.html
-  if (pathname === '/' || pathname === '') {
+  if (key === '/' || key === '') {
     key = '/index.html';
   }
 
