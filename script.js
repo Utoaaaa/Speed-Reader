@@ -62,14 +62,14 @@ async function generateArticle() {
     answerInput.value = '';
 
     try {
-        const response = await fetch('https://6156150.xyz/speedreader/api/deepseek', {
+        const response = await fetch('/speedreader/api/deepseek', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 messages: [{ role: "system", content: `請生成一篇長度約為 ${articleLength} 字的中文文章，並在文章最後生成一個與內文相關的封閉性問題。` }],
-                model: "deepseek-chat",
+                model: "deepseek/deepseek-chat-v3-0324:free",
             }),
         });
 
@@ -131,7 +131,7 @@ async function checkAnswer() {
     submitAnswerButton.disabled = true;
 
     try {
-        const response = await fetch('https://6156150.xyz/speedreader/api/deepseek', {
+        const response = await fetch('/speedreader/api/deepseek', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ async function checkAnswer() {
                     { role: "user", content: `這是使用者的回答：${answer}` },
                     { role: "user", content: `請判斷這個回答是否正確，並簡短地用中文回答「正確」或「不正確，原因是...」。` }
                 ],
-                model: "deepseek-chat",
+                model: "deepseek/deepseek-chat-v3-0324:free",
             }),
         });
 
