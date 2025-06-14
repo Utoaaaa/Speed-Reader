@@ -55,14 +55,17 @@ async function buildAndEmbed() {
       };
     }
 
-    // 將靜態資源物件轉換為 JSON 字串，並附加到 worker.js
-    const assetsJsonString = JSON.stringify(staticAssets, null, 2);
-    const workerContent = fs.readFileSync(path.join(__dirname, 'worker.js'), 'utf-8');
+    // 將靜態資源物件轉換為 JSON 字串
+    const assetsJsonString = `const staticAssets = ${JSON.stringify(staticAssets, null, 2)};`;
     
-    // 移除舊的 assets (如果有的話)
-    const workerContentClean = workerContent.split('const staticAssets = {')[0];
-
-    const finalWorkerContent = `const staticAssets = ${assetsJsonString};\n\n` + workerContentClean;
+    // 讀取 worker 模板
+    const workerTemplate = fs.readFileSync(path.join(__dirname, 'worker-template.js'), 'utf-8');
+    
+    // 將靜態資源注入模板
+    const finalWorkerContent = workerTemplate.replace(
+      '// STATIC_ASSETS_PLACEHOLDER',
+      assetsJsonString
+    );
 
     fs.writeFileSync(path.join(__dirname, 'worker.js'), finalWorkerContent);
 

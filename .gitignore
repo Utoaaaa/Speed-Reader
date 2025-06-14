@@ -10,5 +10,5 @@ node_modules
 # Wrangler
 .wrangler/
 
-# Temporary worker script
-new_worker_script.js
+# Worker script (build artifact)
+worker.js
