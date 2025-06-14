@@ -1,10 +1,12 @@
 // STATIC_ASSETS_PLACEHOLDER
 
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request));
-});
+export default {
+  async fetch(request, env, ctx) {
+    return handleRequest(request, env);
+  },
+};
 
-async function handleRequest(request) {
+async function handleRequest(request, env) {
   const url = new URL(request.url);
 
   // --- API 路由處理 ---
@@ -16,7 +18,7 @@ async function handleRequest(request) {
       return new Response('Method Not Allowed', { status: 405 });
     }
     // 直接呼叫後端邏輯
-    return handleApiRequest(request);
+    return handleApiRequest(request, env);
   }
 
   // --- 靜態網站路由處理 ---
@@ -58,11 +60,12 @@ async function handleRequest(request) {
 /**
  * 處理對 OpenRouter API 的請求
  * @param {Request} request
+ * @param {object} env
  */
-async function handleApiRequest(request) {
+async function handleApiRequest(request, env) {
   // 從 Worker 的環境變數中讀取 API Key
   // **重要**: 您需要在 Worker 的設定中，繫結您在 Pages 中建立的 DEEPSEEK_API_KEY 機密
-  const openRouterApiKey = DEEPSEEK_API_KEY;
+  const openRouterApiKey = env.DEEPSEEK_API_KEY;
 
   if (!openRouterApiKey) {
     return new Response(JSON.stringify({ error: 'DEEPSEEK_API_KEY not configured in Worker secrets. Please bind the secret from your Pages project.' }), {
