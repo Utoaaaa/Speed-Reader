@@ -21,20 +21,19 @@ async function handleRequest(request) {
 
   // --- 靜態網站路由處理 ---
   const { pathname } = url;
-  let key = pathname;
+  let key = `/speedreader${pathname}`;
 
-  // 處理根路徑和子目錄根路徑
-  if (key === '/speedreader/' || key === '/speedreader') {
-    key = '/speedreader/index.html';
-  } else if (key.startsWith('/speedreader')) {
-    // 確保路徑是 /speedreader/file.ext 格式
-    key = `/speedreader${pathname.substring('/speedreader'.length)}`;
-  } else {
-    // 對於不匹配 /speedreader/ 的路徑，也嘗試提供 index.html 作為 SPA 回退
+  // 處理根目錄請求，指向 index.html
+  if (pathname === '/' || pathname === '') {
     key = '/speedreader/index.html';
   }
 
-  const asset = staticAssets[key];
+  let asset = staticAssets[key];
+
+  // 如果找不到，嘗試不加 /speedreader/ 前綴的路徑 (為了本地端預覽)
+  if (!asset) {
+    asset = staticAssets[pathname];
+  }
 
   if (asset) {
     // 從 Base64 解碼
