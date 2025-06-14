@@ -36,7 +36,7 @@ async function buildAndEmbed() {
     for (const file of distFiles) {
       const filePath = path.join(distDir, file);
       const fileContent = fs.readFileSync(filePath);
-      const key = `/speedreader/${file}`; // 根據 worker 中的路由邏輯設定 key
+      const key = `/${file}`; // 根據 worker 中的路由邏輯設定 key
 
       let mimeType = 'application/octet-stream';
       if (file.endsWith('.html')) mimeType = 'text/html; charset=utf-8';

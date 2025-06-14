@@ -8,8 +8,8 @@ async function handleRequest(request) {
   const url = new URL(request.url);
 
   // --- API 路由處理 ---
-  // 監聽 /speedreader/api/deepseek 路徑
-  const API_PATH = '/speedreader/api/deepseek';
+  // 監聽 /api/deepseek 路徑
+  const API_PATH = '/api/deepseek';
   if (url.pathname === API_PATH) {
     // 只允許 POST 方法
     if (request.method !== 'POST') {
@@ -21,11 +21,11 @@ async function handleRequest(request) {
 
   // --- 靜態網站路由處理 ---
   const { pathname } = url;
-  let key = `/speedreader${pathname}`;
+  let key = pathname;
 
   // 處理根目錄請求，指向 index.html
   if (pathname === '/' || pathname === '') {
-    key = '/speedreader/index.html';
+    key = '/index.html';
   }
 
   let asset = staticAssets[key];
@@ -44,7 +44,7 @@ async function handleRequest(request) {
   }
 
   // 如果找不到特定資產，則回退到 index.html
-  const indexAsset = staticAssets['/speedreader/index.html'];
+  const indexAsset = staticAssets['/index.html'];
   if (indexAsset) {
     const buffer = Uint8Array.from(atob(indexAsset.content), c => c.charCodeAt(0));
     return new Response(buffer, {
