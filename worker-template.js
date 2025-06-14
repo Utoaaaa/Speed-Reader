@@ -62,7 +62,7 @@ async function handleRequest(request) {
 async function handleApiRequest(request) {
   // 從 Worker 的環境變數中讀取 API Key
   // **重要**: 您需要在 Worker 的設定中，繫結您在 Pages 中建立的 DEEPSEEK_API_KEY 機密
-  const openRouterApiKey = env.DEEPSEEK_API_KEY;
+  const openRouterApiKey = DEEPSEEK_API_KEY;
 
   if (!openRouterApiKey) {
     return new Response(JSON.stringify({ error: 'DEEPSEEK_API_KEY not configured in Worker secrets. Please bind the secret from your Pages project.' }), {
