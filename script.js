@@ -62,7 +62,7 @@ async function generateArticle() {
     answerInput.value = '';
 
     try {
-        const response = await fetch('/api/deepseek', {
+        const response = await fetch('https://6156150.xyz/speedreader/api/deepseek', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ async function checkAnswer() {
     submitAnswerButton.disabled = true;
 
     try {
-        const response = await fetch('/api/deepseek', {
+        const response = await fetch('https://6156150.xyz/speedreader/api/deepseek', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -1,6 +1,12 @@
 name = "speed-reader"
 compatibility_date = "2024-05-01"
-pages_build_output_dir = "dist"
+main = "worker.js"
+
+[build]
+command = "npm run build"
+# The "watch_dir" is where wrangler will look for changes to trigger a rebuild.
+# We watch the source files, not the dist or worker.js which are build artifacts.
+watch_dir = ["./script.js", "./style.css", "./index.html", "./build.js"]
 
 # For local development, you can temporarily add variables here.
 # Example:
