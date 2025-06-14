@@ -209,6 +209,23 @@ textarea:focus,
     z-index: -2; /* 確保背景在所有內容下方 */
 }
 
+@media (max-width: 800px) {
+    .main-layout {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #settings-container,
+    #display-container {
+        width: 90%;
+    }
+
+    #ai-section {
+        width: 90%;
+        max-width: 800px; /* 保持最大寬度限制 */
+    }
+}
+
 @media (max-width: 768px) {
     h1 { font-size: 2rem; }
     #currentWordDisplay { font-size: 9vw; min-height: 200px; }
@@ -352,7 +369,7 @@ textarea:focus,
 @media (max-width: 700px) {
  
   .tabs {
-    transform: scale(0.6);
+    /* transform: scale(0.6); */
   }
 }
 
