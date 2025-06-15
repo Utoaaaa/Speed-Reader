@@ -318,9 +318,6 @@ function stopPlaying() {
     } else { 
          statusDiv.textContent = '請輸入文字。';
     }
-    if (background) {
-        background.colors([bgColorPicker.value, bgColorPicker.value, bgColorPicker.value, bgColorPicker.value]);
-    }
 }
 
 function initializeApp() {
@@ -377,9 +374,6 @@ function initializeApp() {
 
     bgColorPicker.addEventListener('input', (event) => {
         currentWordDisplay.style.backgroundColor = event.target.value;
-        if (background) {
-            background.colors([event.target.value, event.target.value, event.target.value, event.target.value]);
-        }
     });
 
     playButton.addEventListener('click', () => {
