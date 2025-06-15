@@ -49,7 +49,7 @@ async function generateArticle() {
             articleLength = 300;
             break;
         case 'hard':
-            articleLength = 500;
+            articleLength = 600;
             break;
     }
 
@@ -68,7 +68,7 @@ async function generateArticle() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                messages: [{ role: "system", content: `請生成一篇長度約為 ${articleLength} 字的繁體中文文章，並在文章最後生成一個與內文相關的封閉性問題，請不要生成答案為是或否的問題或是個人想法問題。` }]
+                messages: [{ role: "system", content: `請生成一篇繁體中文隨機主題的文章，長度約為 ${articleLength} 字。文章內容需具備一定資訊密度與明確細節，例如具體事件、數據、人物、時間或因果關係，適合用於測試閱讀理解力。  接著，請在文章最後提出一個封閉式理解性問題，該問題需明確對應文章中的具體內容，並具有單一正確答案（例如：「根據文章，張先生是在哪一年創業的？」或「文中提到哪一個城市因氣候變遷而改變農業模式？」）。  請避免生成主觀性、是非題或推測性問題，問題應客觀、具體且可直接從文章資訊中推論得出。  請勿提供答案。 ` }]
             }),
         });
 
