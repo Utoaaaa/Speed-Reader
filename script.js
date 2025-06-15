@@ -68,7 +68,7 @@ async function generateArticle() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                messages: [{ role: "system", content: `請生成一篇長度約為 ${articleLength} 字的中文文章，並在文章最後生成一個與內文相關的封閉性問題。` }]
+                messages: [{ role: "system", content: `請生成一篇長度約為 ${articleLength} 字的繁體中文文章，並在文章最後生成一個與內文相關的封閉性問題，請不要生成答案為是或否的問題。` }]
             }),
         });
 
